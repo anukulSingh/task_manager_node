@@ -24,7 +24,7 @@ router.post('/users', async (req, res) => {
 
 // @uri POST /users/login
 // @desc login
-// @access private
+// @access public
 router.post('/users/login', async(req,res) => {
     try {
         const user = await User.findByCredentials(req.body.email, req.body.password)
