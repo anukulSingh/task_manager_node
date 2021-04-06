@@ -1,17 +1,7 @@
-const express = require('express')
-require('./db/mongoose')
+const app = require('./app')
+const port = process.env.PORT
 
-const userRouter = require('./Routers/user')
-const taskRouter = require('./Routers/task')
-
-const app = express()
-const PORT = process.env.PORT
-
-app.use(express.json())
-app.use(userRouter)
-app.use(taskRouter)
-
-app.listen(PORT, () => console.log(`Server running on PORT: ${PORT}`))
+app.listen(port, () => console.log(`Server running on PORT: ${PORT}`))
 
 // const multer = require('multer')
 // const upload = multer({
