@@ -1,28 +1,12 @@
 const request = require('supertest')
 const app = require('../src/app')
-const jwt = require('jsonwebtoken')
-const mongoose = require('mongoose')
+
 
 const User = require('../src/models/user')
 const { response } = require('express')
+const { testUser, testUserId, setupDatabase } = require('./fixtures/db')
 
-const testUserId = new mongoose.Types.ObjectId()
-const testUser = {
-    _id: testUserId,
-    name: 'Anukul',
-    email: 'anukulkumar566@hotmail.com',
-    password: "Redhat@34",
-    tokens: [{
-        token: jwt.sign({_id: testUserId}, process.env.JWT_SECRET)
-    }]
-}
-
-beforeEach(async () => {
-    await User.deleteMany()
-    await new User(testUser).save()
-})
-
-
+beforeEach(setupDatabase)
 
 test('Should signup a new user', async () => {
     const response = await request(app)
@@ -47,24 +31,24 @@ test('Should signup a new user', async () => {
         token: user.tokens[0].token
     })
 
-    // check for password hashed
+    // check if password is hashed in the database
     expect(user.password).not.toBe("mypass24!")
 }) 
 
-test('Should login existing user', async () => {
-    await request(app)
-        .post('/users/login')
-        .send({
-            email: testUser.email,
-            password: testUser.password 
-        })
-        .expect(200)
+// test('Should login existing user', async () => {
+//     await request(app)
+//         .post('/users/login')
+//         .send({
+//             email: testUser.email,
+//             password: testUser.password 
+//         })
+//         .expect(200)
 
-    const user = await User.findById(testUserId)
-    expect(response.body.token).toBe(user.tokens[1].token)
+//     const user = await User.findById(testUserId)
+//     expect(response.body.token).toBe(user.tokens[1].token)
 
 
-})
+// })
 
 // test('Should not login nonexistent user', async () => {
 //     await request(app)
@@ -105,4 +89,38 @@ test('Should not delete profile for unauthenticated user', async () => {
         .delete('/users/me')
         .send()
         .expect(401)
+})
+
+test('Should upload avatar image', async () => {
+    await request(app)
+        .post('/users/me/avatar')
+        .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+        .attach('avatar', 'tests/fixtures/profile-pic.jpg')
+        .expect(200)
+
+    const user = await User.findById(testUserId);
+    expect(user.avatar).toEqual(expect.any(Buffer)) // toBe uses === for comparing, not good for objs
+})
+
+test('Should update user credentials', async () => {
+    await request(app)
+        .patch('/users/me')
+        .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+        .send({
+            age: 23
+        })
+        .expect(200)
+
+    const user = await User.findById(testUserId);
+    expect(user.age).toEqual(23);
+})
+
+test('Should not update invalid user fields', async () => {
+    await request(app)
+        .patch('/users/me')
+        .set('Authorization', `Bearer ${testUser.tokens[0].token}`)
+        .send({
+            location: 'Hululu'
+        })
+        .expect(400)
 })

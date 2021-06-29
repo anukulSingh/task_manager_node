@@ -1,7 +1,7 @@
 const app = require('./app')
 const port = process.env.PORT
 
-app.listen(port, () => console.log(`Server running on PORT: ${PORT}`))
+app.listen(port, () => console.log(`Server running on PORT: ${port}`))
 
 // const multer = require('multer')
 // const upload = multer({
